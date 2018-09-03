@@ -55,7 +55,7 @@ get.design.table = function(design) {
 
 # core function for swapping based on minimum variance of lower
 # diagonal entries of co-occurrence matrix
-swapper = function(design, pair, block.id, block.set.rep) {
+swapper = function(design, pair, block.id) {
   
   design.table = get.design.table(design)
   
