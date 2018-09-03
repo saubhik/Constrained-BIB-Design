@@ -22,7 +22,7 @@ alternatives.per.block = 20
 constraint.pairs = list(c(3, 4), c(11, 12), c(19, 20), c(27, 28), c(35, 36), c(43, 44), c(51, 52),
                         c(59, 60), c(68, 69), c(76, 77), c(84, 85), c(92, 93), c(100, 101), c(108, 109),
                         c(117, 118))
-n.repeats=5
+n.repeats = 1
 
 
 # run the BIB design
@@ -35,45 +35,12 @@ results <- optBlock(~.,
 
 # get the co-occurrence matrix for a design
 get.cooccurence.matrix = function(design) {
-
+  
   co.occurrence.matrix = crossprod(table(c(rep(1:number.blocks, 
-                                          rep(alternatives.per.block, number.blocks))), 
-                                          design))
+                                               rep(alternatives.per.block, number.blocks))), 
+                                         design))
   return (co.occurrence.matrix)
 }
-
-
-# find the set of blocks not containing any of the `forbidden` pairs
-# this will be used later in the algorithm, in the next code block
-get.legit.blocks = function(results, constraint.pairs) {
-  block.set.rep = c()
-  block.id = 0
-  for (block in results$Block) {
-    block.id = block.id + 1
-    items.in.current.block = as.numeric(as.character(unlist(block)))
-    
-    # find if the block is legit or not
-    legit.block = TRUE
-    for (pair in constraint.pairs) {
-      if (all(pair %in% items.in.current.block)) {
-        legit.block = FALSE
-        break
-      }
-    }
-    
-    # save the block id if it's a legit block
-    if (legit.block) {
-      block.set.rep = c(block.set.rep, block.id)
-    }
-  }
-  
-  return (block.set.rep)
-}
-
-
-# run the function above to get the legit blocks that can be used
-# for replacement
-block.set.rep = get.legit.blocks(results = results, constraint.pairs = constraint.pairs)
 
 
 # get the design from the results
@@ -92,6 +59,9 @@ swapper = function(design, pair, block.id, block.set.rep) {
   
   design.table = get.design.table(design)
   
+  # get the block ids which doesn't contain any treatment in `pair`
+  block.set.rep = which(!rowSums(design.table == pair[1] | design.table == pair[2]))
+  
   # function to calculate the variance of the lower diag entries
   # of co-occurrence matrix
   get.variance = function(design) {
@@ -107,7 +77,6 @@ swapper = function(design, pair, block.id, block.set.rep) {
     }
   }
   
-  # SOURCE BLOCK CONDITION CHECK
   # get the candidate alternatives which can be used for swapping
   # make sure that these candidate alternatives doesn't contain:
   # 1. any number from original block.id
@@ -128,14 +97,6 @@ swapper = function(design, pair, block.id, block.set.rep) {
     for (ind in 1:length(candidates)) {
       
       block.rep.id = as.numeric(names(candidates[ind]))
-      
-      # DESTINATION BLOCK CONDITION CHECK
-      # if swap element is already present in destination block or
-      # the other element of the pair of swap element is present in
-      # destination block then don't consider that destination block
-      if (any(pair %in% design.table[block.rep.id, ])) {
-        next
-      }
       
       for (elem2 in candidates[[ind]]) {
         
@@ -162,8 +123,35 @@ swapper = function(design, pair, block.id, block.set.rep) {
 }
 
 
+# find the set of blocks not containing a `forbidden` pair
+get.illegit.blocks = function(results, constraint.pairs) {
+  block.set.rep = c()
+  block.id = 0
+  for (block in results$Block) {
+    block.id = block.id + 1
+    items.in.current.block = as.numeric(as.character(unlist(block)))
+
+    # find if the block is legit or not
+    legit.block = TRUE
+    for (pair in constraint.pairs) {
+      if (all(pair %in% items.in.current.block)) {
+        legit.block = FALSE
+        break
+      }
+    }
+
+    # save the block id if it's a illegit block
+    if (!legit.block) {
+      block.set.rep = c(block.set.rep, block.id)
+    }
+  }
+
+  return (block.set.rep)
+}
+
+
 # get the blocks containing a `forbidden` pair
-illegit.blocks = base::setdiff(seq(1, number.blocks), block.set.rep)
+illegit.blocks = get.illegit.blocks(results, constraint.pairs)
 
 
 st = Sys.time()
@@ -174,7 +162,7 @@ for (pair in constraint.pairs) {
     items.in.current.block = as.numeric(as.character(unlist(results$Blocks[[block.id]])))
     if (all(pair %in% items.in.current.block)) {
       # update the design after solving each pair
-      design = swapper(design, pair, block.id, block.set.rep)
+      design = swapper(design, pair, block.id)
     }
   }
 }
@@ -192,7 +180,9 @@ check.constraints = function(design) {
   return (TRUE)
 }
 
-# check whether all the constraints are satisfied: no forbidden pair occurs together
+                      
+# check if the constraints are satisfied: no `forbidden pair` occurs together
 check.constraints(design)
 
-write.csv(get.design.table(design), file = "output_design.csv")
+# output the design as a csv                
+# write.csv(get.design.table(design), file = "design_output.csv")
