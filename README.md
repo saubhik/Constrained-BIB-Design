@@ -21,10 +21,15 @@ And then I use a swapping-based algorithm to satisfy the constraint 5, which I e
 
 ### Algorithm
 * **Step 0** : For every pair `(i, j)` in the `p` treatment pairs, repeat step 1.
+
 * **Step 1** : For every block `b` containing `(i, j)`, repeat steps 2 through 4.
-* **Step 2** : We will be swapping either `i` or `j` with some other treatment. Find the set of all blocks that doesn't contain `(i, j)`. Call this set `Brep`.
+
+* **Step 2** : We will be swapping either `i` or `j` with some other treatment. Find the set of all blocks that doesn't contain `i` and `j` and any treatment in a forbidden triplet containing both `i` and `j`. Call this set `Brep`.
+
 * **Step 3** : Choose a treatment from a block `brep` in `Brep` which doesn't contain any of the treatments in `b`, and also when combined with a treatment from `b` doesn't become a forbidden pair.
-* **Step 4** : Choose the treatment in Step 3, and `i` or `j` which minimizes the variance of the lower triangular entries of the co-occurrence matrix. Make sure that when we are considering `i`, `j` should not be in the block `brep` and vice versa.
+
+* **Step 4** : Choose the treatment in Step 3, and `i` or `j` which minimizes the variance of the lower triangular entries of the co-occurrence matrix.
+
 
 So we see that a swap of `x` from block `bx` with `y` from block `by` is `valid` if:
 1. `y` is not in `bx`.
