@@ -28,7 +28,7 @@ And then I use a swapping-based algorithm to satisfy the constraint 5, which I e
 
 * **Step 3** : Choose a treatment from a block `brep` in `Brep` which doesn't contain any of the treatments in `b`, and also when combined with a treatment from `b` doesn't become a forbidden pair.
 
-* **Step 4** : Choose the treatment in Step 3, and `i` or `j` which minimizes the variance of the lower triangular entries of the co-occurrence matrix.
+* **Step 4** : Choose the treatment in Step 3, and `i` or `j` which is a `valid swap` & minimizes the variance of the lower triangular entries of the co-occurrence matrix.
 
 
 So we see that a swap of `x` from block `bx` with `y` from block `by` is `valid` if:
